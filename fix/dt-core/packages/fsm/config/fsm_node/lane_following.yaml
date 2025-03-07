@@ -1,0 +1,77 @@
+# Initial state of the FSM
+
+initial_state: "IDLE_MODE"
+
+events: # Maps from subscribing topic to signal ids
+  idle_mode_on:
+    topic: "joy_mapper_node/idle_mode"
+    msg_type: "BoolStamped"
+    trigger: True
+  idle_mode_off:
+    topic: "joy_mapper_node/idle_mode"
+    msg_type: "BoolStamped"
+    trigger: False
+  joystick_override_on:
+    topic: "joy_mapper_node/joystick_override"
+    msg_type: "BoolStamped"
+    trigger: True
+  joystick_override_off:
+    topic: "joy_mapper_node/joystick_override"
+    msg_type: "BoolStamped"
+    trigger: False
+  emergency_stop:
+    topic: "wheels_driver_node/emergency_stop"
+    msg_type: "BoolStamped"
+    trigger: True 
+
+
+# Define nodes
+nodes:
+  anti_instagram: "anti_instagram_node/switch"
+  line_detector_node: "line_detector_node/switch"
+  lane_filter_node: "lane_filter_node/switch"
+  ground_projection_node: "ground_projection_node/switch"
+  # extras added
+
+
+# Define state
+states:
+  IDLE_MODE:
+    transitions:
+      idle_mode_off: "LANE_FOLLOWING"
+      joystick_override_on: "NORMAL_JOYSTICK_CONTROL"
+      emergency_stop: "RECOVERY_MODE"
+    lights: "BLUE"
+
+  LANE_FOLLOWING:
+    transitions:
+      idle_mode_on: "IDLE_MODE"
+      emergency_stop: "RECOVERY_MODE"
+    active_nodes:
+      - anti_instagram
+      - line_detector_node
+      - lane_filter_node
+      - ground_projection_node
+    lights: "CAR_DRIVING"
+
+  NORMAL_JOYSTICK_CONTROL:
+    transitions:
+      joystick_override_off: "IDLE_MODE"
+    active_nodes:
+      - anti_instagram
+      - lane_filter_node
+      - line_detector_node
+      - ground_projection_node
+    lights: "GREEN"
+
+  RECOVERY_MODE:
+    transitions:
+      idle_mode_on: "IDLE_MODE"
+    active_nodes:
+      - anti_instagram
+      - line_detector_node
+      - lane_filter_node
+      - ground_projection_node
+    lights: "ORANGE"
+
+
